@@ -1,0 +1,1 @@
+export { existsSync } from "https://deno.land/std@0.61.0/fs/exists.ts";
