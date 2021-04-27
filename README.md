@@ -2,4 +2,4 @@
 
 ## 0.0.1
 
-- expose command `susano stress`, to run the tests during development
+- expose command `susano stress <path>`, to run the tests during development

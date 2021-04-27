@@ -6,20 +6,6 @@ const stressMap: string[] = [];
 interface StressOptions {
   root: string;
 }
-if (import.meta.main) {
-  const [cmd, option] = Deno.args;
-  if (cmd === "stress") {
-    if (option) {
-      stressMode({
-        root: option,
-      });
-    } else {
-      console.error(
-        "Stress Mode: no root specified. usage: ... stress <path-to-tests>",
-      );
-    }
-  }
-}
 function read(path: string): void {
   if (!existsSync(path)) return;
   if (Deno.build.os !== "windows") {
@@ -52,15 +38,21 @@ function read(path: string): void {
     }
   }
 }
-function runTests() {
+async function runTests() {
   console.warn("[Susano] Stress mode: running.");
-  stressMap.forEach((path) => {
+  if (stressMap.length > 1) {
     Deno.run({
-      cmd: ["deno", "test", "--failfast", "--unstable", "-A", path],
+      cmd: ["deno", "test", "--failfast", "--unstable", "-A"],
     });
-  });
+  } else {
+    stressMap.forEach((path) => {
+      Deno.run({
+        cmd: ["deno", "test", "--failfast", "--unstable", "-A", path],
+      });
+    });
+  }
 }
-export default async function stressMode(opts: StressOptions) {
+export async function stressMode(opts: StressOptions) {
   const status = await Deno.permissions.query({ name: "read" });
   if (status.state !== "granted") {
     console.error("[Susano] need read permission");
