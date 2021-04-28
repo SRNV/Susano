@@ -40,7 +40,7 @@ async function runTests() {
   }
   if (testFiles.length > 1) {
     Deno.run({
-      cmd: ["deno", "test", "--failfast", "--unstable", "-A"],
+      cmd: ["deno", "test", "--unstable", "-A"],
     });
   } else {
     testFiles.forEach((path) => {
