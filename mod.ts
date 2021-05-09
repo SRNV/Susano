@@ -50,6 +50,22 @@ async function runTests() {
     });
   }
 }
+
+async function runLint(once: boolean) {
+  console.warn("[Susano]\trunning.");
+  const cp = Deno.run({
+    cmd: ["deno", "lint", "--unstable", ...Deno.args.filter((cmd) => !['lint', '--once'].includes(cmd))],
+    stdout: 'piped',
+  });
+  const a = await cp.status();
+  if (!a.success) {
+    if (once) {
+      Deno.exit(a.code);
+    } else {
+      console.warn('[Susano] lint has failed');
+    }
+  }
+}
 export async function stressMode(opts: StressOptions) {
   const readPermission = await Deno.permissions.query({ name: "read" });
   const runPermission = await Deno.permissions.query({ name: "run" });
@@ -77,5 +93,31 @@ export async function stressMode(opts: StressOptions) {
     console.error(
       `[Susano]\t${opts.root} is not a file or directory. please specify in options a existing file or directory.`,
     );
+  }
+}
+
+export async function lintMode() {
+  const readPermission = await Deno.permissions.query({ name: "read" });
+  const runPermission = await Deno.permissions.query({ name: "run" });
+  if (readPermission.state !== "granted") {
+    console.error("[Susano]\t read permission isn't granted");
+    Deno.exit(0);
+  }
+  if (runPermission.state !== "granted") {
+    console.error("[Susano]\t run permission isn't granted");
+    Deno.exit(0);
+  }
+  const stress = Deno.watchFs(Deno.cwd());
+  console.warn(`[Susano]\tlint mode enabled`);
+  const oneshot = Deno.args.includes('--once');
+  runLint(oneshot);
+  if (oneshot) {
+    return;
+  }
+  for await (const event of stress) {
+    const { kind } = event;
+    if (kind === "access") {
+      runLint(oneshot);
+    }
   }
 }
